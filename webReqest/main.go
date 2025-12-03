@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 )
 
 const myurl string = "https://jsonplaceholder.typicode.com:443/todos/1?name=wael&age=27"
@@ -25,20 +26,53 @@ func main() {
 
 	fmt.Println("name param:", result.Query()["name"])
 	fmt.Println("age param:", result.Query()["age"])
-	response, err := http.Get(myurl)
+	performGetRequest(myurl)
 
-	if err != nil {
-		panic(err.Error())
-	} else {
-		fmt.Printf("Response Type  %T \n", response)
-		response, err := io.ReadAll(response.Body)
-		if err != nil {
-			panic(err.Error())
-		} else {
-			fmt.Println(string(response))
-		}
-	}
+}
+
+func performGetRequest(reqestedUrl string) {
+	response, err := http.Get(reqestedUrl)
+	checkNilError(err)
 	// caller responsibility to close the body
 	defer response.Body.Close()
+	responseByte, err := io.ReadAll(response.Body)
+	checkNilError(err)
+	// option one to read the response body
+	fmt.Println("Response Body:", string(responseByte))
+	// option two to read the response body
+	var responseBody strings.Builder
+	responseBody.Write(responseByte)
+	fmt.Println("Response Body:", responseBody.String())
+
+	// other information about response
+	fmt.Println("Status Code:", response.StatusCode)
+	fmt.Println("Content Length:", response.ContentLength)
+}
+
+func performPostRequest(requestedUrl string) {
+	requestBody := strings.NewReader(`
+		{
+			"name":"wael",
+			"age":27
+		}
+	`)
+	response, err := http.Post(requestedUrl, "application/json", requestBody)
+	checkNilError(err)
+	defer response.Body.Close()
+}
+
+func performPostFormRequest(requestedUrl string) {
+	formData := url.Values{}
+	formData.Add("name", "wael")
+	formData.Add("age", "27")
+	response, err := http.PostForm(requestedUrl, formData)
+	checkNilError(err)
+	defer response.Body.Close()
+}
+
+func checkNilError(err error) {
+	if err != nil {
+		panic(err)
+	}
 
 }
