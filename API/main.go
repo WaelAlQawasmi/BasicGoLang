@@ -37,7 +37,7 @@ func (c *Article) validate() bool {
 // controllers - file
 
 func index(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Welcome to the Articles API"))
+	w.Write([]byte("<h1>Welcome to the Articles API</h1>"))
 }
 
 func getAllArticles(w http.ResponseWriter, r *http.Request) {
@@ -86,6 +86,42 @@ func createArticle(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(article)
 }
-func main() {
 
+func updateArticle(w http.ResponseWriter, r *http.Request) {
+	prams := mux.Vars(r)
+	id, _ := strconv.ParseInt(prams["id"], 10, 64)
+	for index, article := range Articles {
+		if article.ID == int(id) {
+			Articles = append(Articles[:index], Articles[index+1:]...)
+			var updatedArticle Article
+			_ = json.NewDecoder(r.Body).Decode(&updatedArticle)
+		}
+	}
+	w.WriteHeader(http.StatusOK)
+}
+
+func deleteArticale(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	id, _ := strconv.ParseInt(params["id"], 10, 64)
+	for i, artical := range Articles {
+		if artical.ID == int(id) {
+			Articles = append(Articles[:i], Articles[i+1:]...)
+		}
+	}
+	w.WriteHeader(http.StatusNoContent)
+
+}
+
+func main() {
+	r := mux.NewRouter()
+	// seeding some data
+	Articles = append(Articles, Article{ID: 1, Title: "First Article", Content: "This is the content of the first article", Author: &Author{ID: "1", Fullname: "Wael"}})
+	Articles = append(Articles, Article{ID: 2, Title: "Second Article", Content: "This is the content of the second article", Author: &Author{ID: "2", Fullname: "Ali"}})
+	r.HandleFunc("/", index).Methods("GET")
+	r.HandleFunc("/articles", getAllArticles).Methods("GET")
+	r.HandleFunc("/articles/{id}", getArticleByID).Methods("GET")
+	r.HandleFunc("/articles", createArticle).Methods("POST")
+	r.HandleFunc("/articles/{id}", updateArticle).Methods("PUT")
+	r.HandleFunc("/articles/{id}", deleteArticale).Methods("DELETE")
+	http.ListenAndServe(":8080", r)
 }
