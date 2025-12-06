@@ -3,12 +3,26 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"sync"
+	"time"
 )
 
-func main() {
-	EncodeToJSON()
-	DecodeFromJSON()
+var wg sync.WaitGroup // to wait for all goroutines to finish
+var mu sync.Mutex     // to protect shared resources
 
+var encoded int = 0
+
+func main() {
+
+	for i := 0; i < 5; i++ {
+		wg.Add(1) // increment the WaitGroup counter
+		go EncodeToJSON()
+		DecodeFromJSON()
+		wg.Done() // decrement the WaitGroup counter
+	}
+	wg.Wait() // wait for all goroutines to finish
+	time.Sleep(1 * time.Second)
+	defer fmt.Printf("total encoded json calls %d \n", encoded)
 }
 
 type Person struct {
@@ -19,6 +33,9 @@ type Person struct {
 }
 
 func EncodeToJSON() {
+	mu.Lock()   // lock the mutex to protect shared resource
+	encoded++   // this code will be executed by one goroutine at a time
+	mu.Unlock() // unlock the mutex
 	jsonData := []Person{
 		{"wael", 27, []string{"Egypt", "KSA"}},
 		{"ali", 30, []string{"UAE", "KSA"}},
@@ -26,7 +43,7 @@ func EncodeToJSON() {
 	}
 	jsonByte, _ := json.MarshalIndent(jsonData, "", " ")
 
-	fmt.Printf("the json data is %s \n ", string(jsonByte))
+	fmt.Printf("***the json data is %s \n ", string(jsonByte))
 
 }
 func isValidJSON(jsonData []byte) bool {
@@ -60,7 +77,7 @@ func DecodeFromJSON() {
 
 		for _, person := range persons {
 			if person.Name == "wael" {
-				fmt.Printf("the person %s is found with age %d \n", person.Name, person.Age)
+				fmt.Printf("----the person %s is found with age %d \n", person.Name, person.Age)
 			}
 		}
 	}
