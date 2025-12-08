@@ -11,7 +11,7 @@ var wg sync.WaitGroup // to wait for all goroutines to finish
 var mu sync.Mutex     // to protect shared resources
 
 var encoded int = 0
-
+var channel = make(chan int, 5) // buffered channel to limit concurrency
 func main() {
 
 	for i := 0; i < 5; i++ {
@@ -20,7 +20,12 @@ func main() {
 		DecodeFromJSON()
 		wg.Done() // decrement the WaitGroup counter
 	}
-	wg.Wait() // wait for all goroutines to finish
+
+	var x int
+	for i := 0; i < 5; i++ {
+		x = <-channel // release a slot in the buffered channel
+		fmt.Printf("released channel slot %d \n", x)
+	}
 	time.Sleep(1 * time.Second)
 	defer fmt.Printf("total encoded json calls %d \n", encoded)
 }
@@ -33,6 +38,8 @@ type Person struct {
 }
 
 func EncodeToJSON() {
+	channel <- 1 // acquire a slot in the buffered channel
+
 	mu.Lock()   // lock the mutex to protect shared resource
 	encoded++   // this code will be executed by one goroutine at a time
 	mu.Unlock() // unlock the mutex
