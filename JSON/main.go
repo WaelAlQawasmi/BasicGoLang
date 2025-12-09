@@ -26,6 +26,8 @@ func main() {
 		x = <-channel // release a slot in the buffered channel
 		fmt.Printf("released channel slot %d \n", x)
 	}
+	// calledByInterface(&Person{"test", 0, nil})
+	wg.Wait() // wait for all goroutines to finish
 	time.Sleep(1 * time.Second)
 	defer fmt.Printf("total encoded json calls %d \n", encoded)
 }
@@ -35,6 +37,18 @@ type Person struct {
 	Name        string   `json:"MEMBER_NAME"`             // `json:"MEMBER_NAME"` Called struct tag
 	Age         int      `json:"-"`                       // "-" to ignore this field during encoding
 	Nationality []string `json:"nationalities,omitempty"` // "omitempty" to ignore this field if it's empty
+}
+
+// the interface is used to define a contract for JSON operations
+type JSONable interface {
+	EncodeToJSON()
+	DecodeFromJSON()
+}
+
+func calledByInterface(j JSONable) {
+	fmt.Println("called by interface")
+	j.EncodeToJSON()
+	j.DecodeFromJSON()
 }
 
 func EncodeToJSON() {
