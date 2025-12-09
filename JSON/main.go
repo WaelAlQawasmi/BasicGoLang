@@ -39,16 +39,35 @@ type Person struct {
 	Nationality []string `json:"nationalities,omitempty"` // "omitempty" to ignore this field if it's empty
 }
 
-// the interface is used to define a contract for JSON operations
-type JSONable interface {
-	EncodeToJSON()
-	DecodeFromJSON()
+func (p Person) getPersonInfo() string {
+	fmt.Println("person info method called")
+	return p.Name
 }
 
-func calledByInterface(j JSONable) {
+func (p *Person) setPersonAge(Age int) {
+	p.Age = Age
+
+}
+
+/*
+	In Go, an interface is a contract that defines a set of methods without providing any implementation.
+
+	Any struct that implements these methods automatically satisfies the interface, without the need for keywords like implements or extends (unlike Java or PHP).
+
+	This design enables powerful polymorphism, allowing you to write flexible, behavior-driven code that depends on what a type can do, not what it is.
+*/
+
+type Personalization interface {
+	getPersonInfo() string // the method name ,it's parameters  and what it returns
+	setPersonAge(Age int)
+}
+
+// so any struct that has implemented the methods of the interface Personalization
+// can be passed to this function
+
+func getName(p Personalization) {
 	fmt.Println("called by interface")
-	j.EncodeToJSON()
-	j.DecodeFromJSON()
+	fmt.Println(p.getPersonInfo())
 }
 
 func EncodeToJSON() {
